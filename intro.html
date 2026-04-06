@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="FlowValet">
+<meta name="theme-color" content="#c9a84c">
+<title>FlowValet — Valet Management</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192x192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512x512.png">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --black: #0a0a0a;
+    --white: #f5f5f0;
+    --gold: #c9a84c;
+    --gold-light: #e8c97a;
+    --surface: #141414;
+    --surface2: #1e1e1e;
+    --border: rgba(201,168,76,0.2);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    background: var(--black);
+    color: var(--white);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+
+  /* Animated background glow */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background:
+      radial-gradient(ellipse 70% 50% at 50% -5%, rgba(201,168,76,0.18) 0%, transparent 65%),
+      radial-gradient(ellipse 50% 40% at 80% 90%, rgba(201,168,76,0.07) 0%, transparent 60%);
+    pointer-events: none;
+    animation: glowShift 6s ease-in-out infinite alternate;
+  }
+  @keyframes glowShift {
+    from { opacity: 0.8; }
+    to   { opacity: 1; }
+  }
+
+  /* Intro screen */
+  .intro {
+    position: relative; z-index: 2;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 40px 32px;
+    text-align: center;
+    animation: fadeIn 0.6s ease both;
+  }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+
+  .app-icon {
+    width: 110px; height: 110px;
+    border-radius: 26px;
+    box-shadow: 0 0 0 1px rgba(201,168,76,0.3), 0 20px 60px rgba(0,0,0,0.6), 0 0 40px rgba(201,168,76,0.15);
+    margin-bottom: 28px;
+    animation: iconPop 0.7s cubic-bezier(0.175,0.885,0.32,1.275) 0.2s both;
+  }
+  @keyframes iconPop { from { opacity:0; transform:scale(0.7); } to { opacity:1; transform:scale(1); } }
+
+  .app-name {
+    font-family: 'Syne', sans-serif;
+    font-size: 36px; font-weight: 800;
+    letter-spacing: -0.5px;
+    margin-bottom: 6px;
+    animation: fadeIn 0.6s ease 0.35s both;
+  }
+  .app-name span { color: var(--gold); }
+
+  .app-tagline {
+    font-size: 14px; font-weight: 400;
+    color: rgba(255,255,255,0.42);
+    margin-bottom: 36px;
+    letter-spacing: 0.3px;
+    animation: fadeIn 0.6s ease 0.45s both;
+  }
+
+  /* Feature pills */
+  .features {
+    display: flex; flex-direction: column; gap: 10px;
+    width: 100%; max-width: 320px;
+    margin-bottom: 40px;
+    animation: fadeIn 0.6s ease 0.55s both;
+  }
+  .feature {
+    display: flex; align-items: center; gap: 14px;
+    background: var(--surface);
+    border: 1px solid rgba(201,168,76,0.12);
+    border-radius: 14px;
+    padding: 13px 16px;
+    text-align: left;
+  }
+  .feature-icon { font-size: 22px; flex-shrink: 0; }
+  .feature-text { }
+  .feature-title { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; color: var(--white); }
+  .feature-desc { font-size: 11px; color: rgba(255,255,255,0.35); margin-top: 1px; }
+
+  /* CTA buttons */
+  .cta-group {
+    display: flex; flex-direction: column; gap: 10px;
+    width: 100%; max-width: 320px;
+    animation: fadeIn 0.6s ease 0.65s both;
+  }
+  .cta-btn {
+    width: 100%; padding: 16px;
+    border: none; border-radius: 14px;
+    font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700;
+    cursor: pointer; transition: all 0.2s;
+    text-decoration: none; display: block; text-align: center;
+  }
+  .cta-primary { background: var(--gold); color: var(--black); }
+  .cta-primary:hover { background: var(--gold-light); transform: translateY(-1px); }
+  .cta-secondary {
+    background: var(--surface); color: var(--white);
+    border: 1px solid rgba(201,168,76,0.2);
+    font-size: 14px; font-weight: 600;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .cta-secondary:hover { border-color: var(--gold); }
+
+  /* Install banner (shown when PWA installable) */
+  .install-banner {
+    display: none;
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    padding: 16px 20px calc(16px + env(safe-area-inset-bottom));
+    z-index: 100;
+    animation: slideUp 0.4s cubic-bezier(0.175,0.885,0.32,1.275);
+  }
+  .install-banner.show { display: block; }
+  @keyframes slideUp { from { transform:translateY(100%); } to { transform:translateY(0); } }
+  .install-banner-inner { display:flex; align-items:center; gap:14px; max-width:480px; margin:0 auto; }
+  .install-icon { width:48px; height:48px; border-radius:12px; flex-shrink:0; }
+  .install-text { flex:1; }
+  .install-title { font-family:'Syne',sans-serif; font-size:14px; font-weight:700; }
+  .install-sub { font-size:12px; color:rgba(255,255,255,0.4); margin-top:2px; }
+  .install-btn {
+    background:var(--gold); color:var(--black);
+    border:none; border-radius:10px;
+    padding:10px 18px; font-family:'Syne',sans-serif;
+    font-size:13px; font-weight:700; cursor:pointer;
+    white-space:nowrap; flex-shrink:0;
+    transition: background 0.2s;
+  }
+  .install-btn:hover { background:var(--gold-light); }
+  .install-close {
+    background:none; border:none; color:rgba(255,255,255,0.3);
+    font-size:18px; cursor:pointer; flex-shrink:0; padding:4px;
+  }
+
+  /* iOS install hint */
+  .ios-hint {
+    display:none; position:fixed; bottom:0; left:0; right:0;
+    background:var(--surface); border-top:1px solid var(--border);
+    padding:18px 20px calc(18px + env(safe-area-inset-bottom));
+    z-index:100; text-align:center;
+    animation:slideUp 0.4s ease;
+  }
+  .ios-hint.show { display:block; }
+  .ios-hint p { font-size:14px; color:var(--white); line-height:1.6; margin-bottom:4px; }
+  .ios-hint p span { color:var(--gold); font-weight:700; }
+  .ios-hint small { font-size:12px; color:rgba(255,255,255,0.35); }
+  .ios-hint-close { margin-top:12px; background:var(--surface2); border:1px solid var(--border); color:rgba(255,255,255,0.5); border-radius:8px; padding:8px 20px; font-size:13px; cursor:pointer; font-family:'DM Sans',sans-serif; }
+
+  /* Version */
+  .version { font-size:11px; color:rgba(255,255,255,0.18); margin-top:28px; animation:fadeIn 0.6s ease 0.75s both; }
+</style>
+</head>
+<body>
+
+<div class="intro">
+  <img class="app-icon" src="icons/icon-192x192.png" alt="FlowValet">
+
+  <div class="app-name">Flow<span>Valet</span></div>
+  <div class="app-tagline">Smart Valet Parking Management</div>
+
+  <div class="features">
+    <div class="feature">
+      <div class="feature-icon">⚡</div>
+      <div class="feature-text">
+        <div class="feature-title">Instant QR Check-In</div>
+        <div class="feature-desc">Generate a scannable ticket for every vehicle in seconds</div>
+      </div>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">📊</div>
+      <div class="feature-text">
+        <div class="feature-title">Live Dashboard</div>
+        <div class="feature-desc">Track all parked vehicles, durations, and requests in real time</div>
+      </div>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">🚗</div>
+      <div class="feature-text">
+        <div class="feature-title">Customer Notifications</div>
+        <div class="feature-desc">Customers request their car — valets are notified instantly</div>
+      </div>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">🔒</div>
+      <div class="feature-text">
+        <div class="feature-title">Secure &amp; Cloud-Backed</div>
+        <div class="feature-desc">All data saved to Firebase in real time, password protected</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cta-group">
+    <a href="index.html" class="cta-btn cta-primary">⚡ Open App</a>
+    <button class="cta-btn cta-secondary" id="installBtn" onclick="triggerInstall()" style="display:none;">
+      📲 Add to Home Screen
+    </button>
+    <button class="cta-btn cta-secondary" id="iosInstallBtn" onclick="showIOSHint()" style="display:none;">
+      📲 Add to Home Screen
+    </button>
+  </div>
+
+  <div class="version">FlowValet v1.0 &nbsp;·&nbsp; © Mohammad Al-Jammal</div>
+</div>
+
+<!-- Android/Desktop Install Banner -->
+<div class="install-banner" id="installBanner">
+  <div class="install-banner-inner">
+    <img class="install-icon" src="icons/icon-192x192.png" alt="">
+    <div class="install-text">
+      <div class="install-title">Install FlowValet</div>
+      <div class="install-sub">Add to home screen for quick access</div>
+    </div>
+    <button class="install-btn" onclick="triggerInstall()">Install</button>
+    <button class="install-close" onclick="dismissBanner()">✕</button>
+  </div>
+</div>
+
+<!-- iOS Install Hint -->
+<div class="ios-hint" id="iosHint">
+  <p>Tap <span>Share ⎙</span> at the bottom of your browser,<br>then tap <span>"Add to Home Screen"</span></p>
+  <small>This adds FlowValet as an app icon on your home screen</small><br>
+  <button class="ios-hint-close" onclick="document.getElementById('iosHint').classList.remove('show')">Got it</button>
+</div>
+
+<script>
+// ── Service Worker registration ──────────────────────────────────
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('./sw.js')
+      .then(function(reg) { console.log('[FlowValet] SW registered:', reg.scope); })
+      .catch(function(err) { console.log('[FlowValet] SW failed:', err); });
+  });
+}
+
+// ── PWA Install Prompt (Android / Desktop) ───────────────────────
+var deferredPrompt = null;
+
+window.addEventListener('beforeinstallprompt', function(e) {
+  e.preventDefault();
+  deferredPrompt = e;
+
+  // Show install button and banner
+  document.getElementById('installBtn').style.display = 'block';
+  setTimeout(function() {
+    document.getElementById('installBanner').classList.add('show');
+  }, 1500);
+});
+
+function triggerInstall() {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then(function(result) {
+    console.log('[FlowValet] Install result:', result.outcome);
+    deferredPrompt = null;
+    document.getElementById('installBtn').style.display = 'none';
+    dismissBanner();
+  });
+}
+
+function dismissBanner() {
+  document.getElementById('installBanner').classList.remove('show');
+}
+
+window.addEventListener('appinstalled', function() {
+  console.log('[FlowValet] App installed!');
+  dismissBanner();
+  document.getElementById('installBtn').style.display = 'none';
+});
+
+// ── iOS detection ────────────────────────────────────────────────
+var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+var isInStandaloneMode = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+
+if (isIOS && !isInStandaloneMode) {
+  document.getElementById('iosInstallBtn').style.display = 'block';
+}
+
+function showIOSHint() {
+  document.getElementById('iosHint').classList.add('show');
+}
+
+// ── If already installed as PWA, go straight to app ─────────────
+if (isInStandaloneMode) {
+  window.location.replace('./index.html');
+}
+</script>
+</body>
+</html>
