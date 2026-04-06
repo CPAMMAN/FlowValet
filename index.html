@@ -19,17 +19,63 @@
 <style>
 :root {
   --black:#0a0a0a; --white:#f5f5f0; --gold:#c9a84c; --gold-light:#e8c97a;
-  --surface:#141414; --surface2:#1e1e1e; --border:rgba(201,168,76,0.2);
+  --surface:#141414; --surface2:#1e1e1e; --border:rgba(201,168,76,0.2); --red:#f87171;
 }
 *{margin:0;padding:0;box-sizing:border-box;}
 body{background:var(--black);color:var(--white);font-family:'DM Sans',sans-serif;min-height:100vh;display:flex;flex-direction:column;}
 body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 50% at 50% -10%,rgba(201,168,76,0.12) 0%,transparent 70%);pointer-events:none;z-index:0;}
+
+/* ── LOGIN GATE ── */
+.login-overlay{
+  position:fixed;inset:0;background:var(--black);z-index:200;
+  display:flex;align-items:center;justify-content:center;padding:20px;
+}
+.login-box{
+  background:var(--surface);border:1px solid var(--border);border-radius:20px;
+  padding:40px 36px;width:100%;max-width:360px;text-align:center;
+}
+.login-logo{font-family:'Syne',sans-serif;font-weight:800;font-size:26px;margin-bottom:4px;}
+.login-logo span{color:var(--gold);}
+.login-role{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--gold);margin-bottom:6px;opacity:0.7;}
+.login-sub{font-size:13px;color:rgba(255,255,255,0.35);margin-bottom:28px;}
+.login-input{
+  width:100%;background:var(--surface2);border:1px solid rgba(255,255,255,0.08);
+  border-radius:10px;padding:14px 16px;font-size:16px;color:var(--white);
+  font-family:'DM Sans',sans-serif;outline:none;margin-bottom:12px;
+  transition:border-color 0.2s;text-align:center;letter-spacing:6px;
+}
+.login-input:focus{border-color:var(--gold);}
+.login-btn{
+  width:100%;padding:14px;background:var(--gold);color:var(--black);
+  border:none;border-radius:10px;font-family:'Syne',sans-serif;
+  font-size:15px;font-weight:700;cursor:pointer;transition:all 0.2s;
+}
+.login-btn:hover{background:var(--gold-light);}
+.login-err{font-size:13px;color:var(--red);margin-top:10px;display:none;}
+.login-hint{font-size:11px;color:rgba(255,255,255,0.18);margin-top:20px;}
+.login-hint span{color:rgba(201,168,76,0.4);}
+
+/* Shake animation on wrong password */
+@keyframes shake{
+  0%,100%{transform:translateX(0)}
+  20%{transform:translateX(-8px)}
+  40%{transform:translateX(8px)}
+  60%{transform:translateX(-6px)}
+  80%{transform:translateX(6px)}
+}
+.shake{animation:shake 0.4s ease;}
+
+/* ── MAIN APP (hidden until logged in) ── */
 .page{position:relative;z-index:1;flex:1;display:flex;flex-direction:column;}
 header{display:flex;justify-content:space-between;align-items:center;padding:20px 28px;border-bottom:1px solid var(--border);}
 .logo{font-family:'Syne',sans-serif;font-weight:800;font-size:22px;color:var(--white);}
 .logo span{color:var(--gold);}
-.nav-btn{padding:8px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;text-decoration:none;transition:all 0.2s;font-family:'DM Sans',sans-serif;background:var(--gold);color:var(--black);border:none;}
+.header-right{display:flex;gap:8px;align-items:center;}
+.nav-btn{padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;text-decoration:none;transition:all 0.2s;font-family:'DM Sans',sans-serif;background:var(--gold);color:var(--black);border:none;}
 .nav-btn:hover{background:var(--gold-light);}
+.logout-btn{padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;background:transparent;color:rgba(255,255,255,0.35);border:1px solid rgba(255,255,255,0.08);font-family:'DM Sans',sans-serif;transition:all 0.2s;}
+.logout-btn:hover{border-color:var(--red);color:var(--red);}
+
 main{flex:1;display:flex;align-items:center;justify-content:center;padding:32px 20px;}
 .wrap{width:100%;max-width:460px;}
 .title{font-family:'Syne',sans-serif;font-size:30px;font-weight:800;margin-bottom:6px;}
@@ -44,6 +90,8 @@ main{flex:1;display:flex;align-items:center;justify-content:center;padding:32px 
 .spot-input{font-size:28px!important;text-align:center;letter-spacing:4px!important;}
 .btn{width:100%;padding:16px;background:var(--gold);color:var(--black);border:none;border-radius:10px;font-family:'Syne',sans-serif;font-size:16px;font-weight:700;cursor:pointer;transition:all 0.2s;}
 .btn:hover{background:var(--gold-light);transform:translateY(-1px);}
+
+/* QR result */
 .qr-box{display:none;text-align:center;}
 .qr-box.show{display:block;animation:fadeUp 0.4s ease;}
 @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
@@ -58,24 +106,26 @@ main{flex:1;display:flex;align-items:center;justify-content:center;padding:32px 
 .btn-print:hover{border-color:var(--gold);}
 .btn-new{background:var(--gold);color:var(--black);}
 .btn-new:hover{background:var(--gold-light);}
+
+/* Toast */
 .toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--surface2);border:1px solid var(--border);color:var(--white);padding:12px 24px;border-radius:100px;font-size:14px;font-weight:500;transition:transform 0.3s ease;z-index:999;white-space:nowrap;}
 .toast.show{transform:translateX(-50%) translateY(0);}
+
 footer{text-align:center;padding:14px 20px;border-top:1px solid rgba(201,168,76,0.1);font-size:11px;color:rgba(245,245,240,0.25);letter-spacing:0.5px;}
 footer span{color:rgba(201,168,76,0.5);}
 
-/* ── PRINT: only the receipt div appears, nothing else ── */
+/* ── PRINT ── */
 @media print {
-  @page { size:80mm 120mm; margin:0; }
-  body > * { display:none !important; }
-  .print-receipt {
-    display:flex !important;
-    position:fixed; inset:0;
-    flex-direction:column; align-items:center;
-    padding:6mm 5mm 5mm; background:#fff;
+  @page{size:80mm 120mm;margin:0;}
+  body>*{display:none!important;}
+  .print-receipt{
+    display:flex!important;position:fixed;inset:0;
+    flex-direction:column;align-items:center;
+    padding:6mm 5mm 5mm;background:#fff;
     font-family:'DM Sans',Arial,sans-serif;
-    -webkit-print-color-adjust:exact; print-color-adjust:exact;
+    -webkit-print-color-adjust:exact;print-color-adjust:exact;
   }
-  .print-receipt * { visibility:visible; }
+  .print-receipt *{visibility:visible;}
   .pr-brand{font-size:15pt;font-weight:900;letter-spacing:1px;color:#000;margin-bottom:0.5mm;}
   .pr-brand em{color:#b8860b;font-style:normal;}
   .pr-sub{font-size:7pt;color:#888;margin-bottom:0.5mm;}
@@ -94,10 +144,28 @@ footer span{color:rgba(201,168,76,0.5);}
 </style>
 </head>
 <body>
-<div class="page">
+
+<!-- ── STAFF LOGIN GATE ── -->
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-box" id="loginBox">
+    <div class="login-logo">Flow<span>Valet</span></div>
+    <div class="login-role">Staff Access</div>
+    <div class="login-sub">Enter your password to check in vehicles</div>
+    <input type="password" class="login-input" id="passInput" placeholder="••••••" maxlength="30" autocomplete="current-password">
+    <button class="login-btn" onclick="doLogin()">Enter</button>
+    <div class="login-err" id="loginErr">❌ Incorrect password</div>
+    <div class="login-hint">© <span>Mohammad Al-Jammal</span> · FlowValet Staff Portal</div>
+  </div>
+</div>
+
+<!-- ── MAIN APP ── -->
+<div class="page" id="mainApp" style="display:none;">
   <header>
     <div class="logo">Flow<span>Valet</span></div>
-    <a href="dashboard.html" class="nav-btn">📊 Dashboard</a>
+    <div class="header-right">
+      <a href="dashboard.html" class="nav-btn">📊 Dashboard</a>
+      <button class="logout-btn" onclick="doLogout()">Logout</button>
+    </div>
   </header>
   <main>
     <div class="wrap">
@@ -125,9 +193,10 @@ footer span{color:rgba(201,168,76,0.5);}
       </div>
     </div>
   </main>
+  <footer>Flow<span>Valet</span> &nbsp;·&nbsp; © Mohammad Al-Jammal &nbsp;·&nbsp; All Rights Reserved</footer>
 </div>
 
-<!-- Print receipt (only visible when printing) -->
+<!-- Print receipt -->
 <div class="print-receipt" id="printReceipt">
   <div class="pr-brand">Flow<em>Valet</em></div>
   <div class="pr-sub">Valet Parking Ticket</div>
@@ -146,11 +215,12 @@ footer span{color:rgba(201,168,76,0.5);}
 </div>
 
 <div class="toast" id="toast"></div>
-<footer>Flow<span>Valet</span> &nbsp;·&nbsp; © Mohammad Al-Jammal &nbsp;·&nbsp; All Rights Reserved</footer>
 
+<!-- Firebase -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
 const firebaseConfig = {
   apiKey:"AIzaSyC0IXfYNIbEjbLiPiY8C2C_JPAd5baTLMo",
   authDomain:"flowvalet-efd95.firebaseapp.com",
@@ -160,12 +230,61 @@ const firebaseConfig = {
   messagingSenderId:"394962828421",
   appId:"1:394962828421:web:7bab162c88f3da9ee13dec"
 };
-const app=initializeApp(firebaseConfig);
-const db=getDatabase(app);
+
+const app = initializeApp(firebaseConfig);
+const db  = getDatabase(app);
 window.__db=db; window.__ref=ref; window.__set=set; window.__fbReady=true;
+
+// Load password from Firebase
+var currentPass = 'valet2024';
+get(ref(db,'config/password')).then(function(s){ if(s.exists()) currentPass=s.val(); });
+window.__getPass = function(){ return currentPass; };
 </script>
 
 <script>
+// ── Login / Logout ────────────────────────────────────────────────
+function doLogin(){
+  var val = document.getElementById('passInput').value;
+  var cur = window.__getPass ? window.__getPass() : 'valet2024';
+
+  if(val === cur){
+    document.getElementById('loginOverlay').style.display='none';
+    document.getElementById('mainApp').style.display='flex';
+    sessionStorage.setItem('valetStaffAuth','1');
+    // Focus plate input
+    setTimeout(function(){ document.getElementById('plateInput').focus(); }, 200);
+  } else {
+    var err = document.getElementById('loginErr');
+    var box = document.getElementById('loginBox');
+    err.style.display='block';
+    document.getElementById('passInput').value='';
+    // Shake animation
+    box.classList.remove('shake');
+    void box.offsetWidth; // reflow to restart animation
+    box.classList.add('shake');
+    setTimeout(function(){ box.classList.remove('shake'); }, 400);
+  }
+}
+
+function doLogout(){
+  sessionStorage.removeItem('valetStaffAuth');
+  document.getElementById('mainApp').style.display='none';
+  document.getElementById('loginOverlay').style.display='flex';
+  document.getElementById('passInput').value='';
+  document.getElementById('loginErr').style.display='none';
+}
+
+// Auto-login if session still active
+if(sessionStorage.getItem('valetStaffAuth')==='1'){
+  document.getElementById('loginOverlay').style.display='none';
+  document.getElementById('mainApp').style.display='flex';
+}
+
+document.getElementById('passInput').addEventListener('keydown',function(e){
+  if(e.key==='Enter') doLogin();
+});
+
+// ── Ticket creation ───────────────────────────────────────────────
 function toast(msg){ var t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(function(){ t.classList.remove('show'); },2500); }
 function genId(){ return Math.random().toString(36).substr(2,8).toUpperCase(); }
 
@@ -181,8 +300,9 @@ function createTicket(){
   var dateShort=now.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
 
   if(window.__fbReady){
-    window.__set(window.__ref(window.__db,'tickets/'+id),{plate,spot,checkinTime:now.toISOString(),status:'parked'})
-      .then(function(){ toast('✅ Ticket saved'); })
+    window.__set(window.__ref(window.__db,'tickets/'+id),{
+      plate, spot, checkinTime:now.toISOString(), status:'parked'
+    }).then(function(){ toast('✅ Ticket saved'); })
       .catch(function(){ toast('⚠️ Firebase error'); });
   }
 
@@ -215,16 +335,24 @@ function newTicket(){
   document.getElementById('formCard').style.display='block';
   document.getElementById('qrCanvas').innerHTML='';
   document.getElementById('prQRCanvas').innerHTML='';
+  setTimeout(function(){ document.getElementById('plateInput').focus(); },150);
 }
 
-document.addEventListener('keydown',function(e){ if(e.key==='Enter') createTicket(); });
+document.addEventListener('keydown',function(e){
+  // Only trigger Enter for check-in when app is visible
+  if(e.key==='Enter' && document.getElementById('mainApp').style.display!=='none'){
+    var active=document.activeElement;
+    if(active && (active.id==='plateInput'||active.id==='spotInput')) createTicket();
+  }
+});
 </script>
+
 <script>
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", function() {
+if("serviceWorker" in navigator){
+  window.addEventListener("load",function(){
     navigator.serviceWorker.register("./sw.js")
       .then(function(r){ console.log("[FlowValet] SW ready"); })
-      .catch(function(e){ console.log("[FlowValet] SW error", e); });
+      .catch(function(e){ console.log("[FlowValet] SW error",e); });
   });
 }
 </script>
