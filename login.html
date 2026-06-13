@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" id="htmlRoot">
+<head>
+<meta charset="UTF-8">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Issue Tracker">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192x192.png">
+<link rel="icon" type="image/png" href="icons/icon-512x512.png">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#8B1A4A">
+<title>Issue Tracker — Crowne Plaza Amman</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{--cp:#8B1A4A;--cp-dark:#6B1238;--cp-light:#B8427A;--white:#fff;--off:#fafafa;--surface:#f4f4f6;--border:#e8e0e8;--text:#1a1a1a;--muted:#7a7a8a;--red:#dc2626;}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;}
+body{background:var(--off);font-family:'Inter',sans-serif;color:var(--text);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;position:relative;overflow:hidden;}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 60% at 50% -10%,rgba(139,26,74,0.07),transparent 60%),radial-gradient(ellipse 50% 40% at 100% 100%,rgba(139,26,74,0.05),transparent 50%);pointer-events:none;}
+.card{background:var(--white);border-radius:24px;box-shadow:0 4px 6px rgba(0,0,0,0.04),0 20px 60px rgba(139,26,74,0.1);padding:40px 36px;width:100%;max-width:400px;position:relative;z-index:1;}
+.logo-wrap{text-align:center;margin-bottom:28px;}
+.logo{width:160px;opacity:0.92;}
+.hotel{font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--cp);margin-top:8px;}
+h1{font-family:'Playfair Display',serif;font-size:24px;text-align:center;margin-bottom:4px;}
+.sub{font-size:13px;color:var(--muted);text-align:center;margin-bottom:24px;line-height:1.5;}
+.lang-row{display:flex;gap:6px;justify-content:center;margin-bottom:22px;}
+.lb{padding:6px 18px;border-radius:100px;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;border:1.5px solid var(--border);background:transparent;color:var(--muted);font-family:'Inter',sans-serif;}
+.lb.active{background:var(--cp);color:#fff;border-color:var(--cp);}
+.field{margin-bottom:14px;}
+.field label{display:block;font-size:11px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--cp);margin-bottom:6px;}
+.field input{width:100%;background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:13px 16px;font-size:15px;color:var(--text);font-family:'Inter',sans-serif;outline:none;transition:border-color .2s,box-shadow .2s;}
+.field input:focus{border-color:var(--cp);box-shadow:0 0 0 3px rgba(139,26,74,0.1);}
+.btn{width:100%;padding:14px;background:var(--cp);color:#fff;border:none;border-radius:10px;font-family:'Inter',sans-serif;font-size:15px;font-weight:600;cursor:pointer;transition:all .2s;margin-top:4px;}
+.btn:hover{background:var(--cp-dark);transform:translateY(-1px);box-shadow:0 8px 24px rgba(139,26,74,0.25);}
+.btn:disabled{opacity:.6;transform:none;cursor:not-allowed;}
+.err{font-size:12px;color:var(--red);text-align:center;margin-top:10px;display:none;padding:10px;background:rgba(220,38,38,0.06);border-radius:8px;}
+.chips{display:flex;gap:8px;margin-top:18px;justify-content:center;}
+.chip{font-size:11px;font-weight:500;padding:4px 12px;border-radius:100px;border:1px solid var(--border);color:var(--muted);}
+.credits{text-align:center;margin-top:22px;font-size:11px;color:var(--muted);line-height:1.7;}
+.credits strong{color:var(--cp);}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-7px)}40%{transform:translateX(7px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+.shake{animation:shake .35s ease;}
+body.rtl{direction:rtl;}
+</style>
+</head>
+<body>
+<div class="card" id="card">
+  <div class="logo-wrap">
+    <img class="logo" src="cp_logo.png" alt="Crowne Plaza">
+    <div class="hotel" id="hotelLabel">Crowne Plaza Amman</div>
+  </div>
+  <h1 id="appName">Issue Tracker</h1>
+  <div class="sub" id="loginSub">Sign in to access your dashboard</div>
+  <div class="lang-row">
+    <button class="lb active" onclick="setLang('en')">English</button>
+    <button class="lb" onclick="setLang('ar')">العربية</button>
+  </div>
+  <div class="field"><label id="lUser">Username</label><input type="text" id="uInput" autocomplete="username" autocapitalize="none" placeholder="username"></div>
+  <div class="field"><label id="lPass">Password</label><input type="password" id="pInput" autocomplete="current-password" placeholder="••••••••"></div>
+  <button class="btn" id="loginBtn" onclick="doLogin()">Sign In</button>
+  <div class="err" id="errMsg"></div>
+  <div class="chips"><span class="chip" id="chip1">👑 Management</span><span class="chip" id="chip2">🏨 Departments</span></div>
+  <div class="credits"><strong id="cred1">Developed by Mohammad Al-Jammal</strong><br><span id="cred2">IHG Hotels & Resorts · Crowne Plaza Amman</span></div>
+</div>
+<script src="config.js"></script>
+<script src="app.js"></script>
+<script>
+window.currentLang = sessionStorage.getItem('cpLang')||'en';
+function applyLang(){
+  var lang=window.currentLang, s=window.STRINGS[lang];
+  document.getElementById('htmlRoot').lang=lang;
+  document.getElementById('htmlRoot').dir=lang==='ar'?'rtl':'ltr';
+  document.body.classList.toggle('rtl',lang==='ar');
+  document.getElementById('hotelLabel').textContent=s.hotelName;
+  document.getElementById('appName').textContent=s.appName;
+  document.getElementById('loginSub').textContent=s.loginSub;
+  document.getElementById('lUser').textContent=s.username;
+  document.getElementById('lPass').textContent=s.password;
+  document.getElementById('loginBtn').textContent=s.login;
+  document.getElementById('chip1').textContent=s.mgmtChip;
+  document.getElementById('chip2').textContent=s.deptChip;
+  document.getElementById('cred1').textContent=s.credits;
+  document.getElementById('cred2').textContent=s.creditsSub;
+  document.querySelectorAll('.lb').forEach(b=>b.classList.toggle('active',(lang==='en'&&b.textContent==='English')||(lang==='ar'&&b.textContent==='العربية')));
+}
+function setLang(lang){ window.currentLang=lang; sessionStorage.setItem('cpLang',lang); applyLang(); }
+applyLang();
+
+async function doLogin(){
+  var u=document.getElementById('uInput').value.trim().toLowerCase();
+  var p=document.getElementById('pInput').value;
+  var err=document.getElementById('errMsg');
+  err.style.display='none';
+  if(!u||!p){ shake(); return; }
+  var btn=document.getElementById('loginBtn');
+  btn.disabled=true; btn.textContent='…';
+  try{
+    var data=await window.sb.get('users','username=eq.'+encodeURIComponent(u));
+    if(!data||!data.length||data[0].password!==p){ showErr(); return; }
+    var user=data[0];
+    sessionStorage.setItem('cpUser',JSON.stringify({username:u,role:user.role,dept:user.dept||'',nameEn:user.name_en,nameAr:user.name_ar}));
+    window.location.href=user.role==='management'?'management.html':'department.html';
+  }catch(e){ showErr(); }
+  finally{ btn.disabled=false; btn.textContent=window.STRINGS[window.currentLang].login; }
+}
+function showErr(){ var e=document.getElementById('errMsg'); e.textContent=window.t('loginErr'); e.style.display='block'; shake(); }
+function shake(){ var c=document.getElementById('card'); c.classList.remove('shake'); void c.offsetWidth; c.classList.add('shake'); setTimeout(()=>c.classList.remove('shake'),350); }
+document.getElementById('pInput').addEventListener('keydown',e=>{ if(e.key==='Enter') doLogin(); });
+document.getElementById('uInput').addEventListener('keydown',e=>{ if(e.key==='Enter') document.getElementById('pInput').focus(); });
+</script>
+<script>if('serviceWorker'in navigator) navigator.serviceWorker.register('./sw.js');</script>
+</body>
+</html>

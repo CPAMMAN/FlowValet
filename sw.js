@@ -1,63 +1,24 @@
-// FlowValet Service Worker v1.0
-const CACHE_NAME = 'flowvalet-v1';
-const ASSETS = [
-  './',
-  './index.html',
-  './dashboard.html',
-  './ticket.html',
-  './manifest.json',
-  './icons/icon-192x192.png',
-  './icons/icon-512x512.png',
-  'https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap',
-  'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js'
+// CP Amman Issue Tracker — Service Worker v3
+const CACHE = 'cp-issues-v3';
+const SHELL = [
+  './login.html','./management.html','./department.html',
+  './cp_logo.png','./manifest.json','./config.js',
+  'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap'
 ];
-
-// Install — cache core assets
-self.addEventListener('install', function(e) {
-  e.waitUntil(
-    caches.open(CACHE_NAME).then(function(cache) {
-      return cache.addAll(ASSETS.map(function(url) {
-        return new Request(url, { cache: 'reload' });
-      })).catch(function(err) {
-        console.log('[SW] Some assets failed to cache:', err);
-      });
-    })
-  );
+self.addEventListener('install',e=>{
+  e.waitUntil(caches.open(CACHE).then(c=>c.addAll(SHELL).catch(()=>{})));
   self.skipWaiting();
 });
-
-// Activate — clear old caches
-self.addEventListener('activate', function(e) {
-  e.waitUntil(
-    caches.keys().then(function(keys) {
-      return Promise.all(
-        keys.filter(function(k) { return k !== CACHE_NAME; })
-            .map(function(k) { return caches.delete(k); })
-      );
-    })
-  );
+self.addEventListener('activate',e=>{
+  e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))));
   self.clients.claim();
 });
-
-// Fetch — network first, fallback to cache
-self.addEventListener('fetch', function(e) {
-  // Skip Firebase requests — always network
-  if (e.request.url.includes('firebasedatabase') ||
-      e.request.url.includes('firebaseapp') ||
-      e.request.url.includes('googleapis.com/identitytoolkit')) {
-    return;
-  }
-  e.respondWith(
-    fetch(e.request)
-      .then(function(response) {
-        var clone = response.clone();
-        caches.open(CACHE_NAME).then(function(cache) {
-          cache.put(e.request, clone);
-        });
-        return response;
-      })
-      .catch(function() {
-        return caches.match(e.request);
-      })
-  );
+self.addEventListener('fetch',e=>{
+  if(e.request.url.includes('supabase')||e.request.url.includes('imgbb')||e.request.url.includes('api.')) return;
+  e.respondWith(fetch(e.request).then(res=>{caches.open(CACHE).then(c=>c.put(e.request,res.clone()));return res;}).catch(()=>caches.match(e.request)));
+});
+// Push notifications
+self.addEventListener('push',e=>{
+  var data=e.data?e.data.json():{title:'CP Issue Tracker',body:'New update'};
+  self.registration.showNotification(data.title,{body:data.body,icon:'./icons/icon-192x192.png',badge:'./icons/icon-72x72.png',vibrate:[200,100,200]});
 });
